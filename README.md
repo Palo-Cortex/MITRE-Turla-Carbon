@@ -14,6 +14,20 @@ In this phase, the Turla group:
 5. **Lateral Movement**: Deploys `CARBON-DLL` into the Windows environment.
 6. **Linux Compromise**: Moves laterally to a Linux Apache web server and installs `PENGUIN` to create a watering hole.
 
+## 🧪 Attack Sequence: MITRE Turla Carbon Scenario
+
+This section outlines the key phases of the Turla Carbon attack:
+
+1. **Initial Access**: Spearphishing email installs EPIC backdoor.
+2. **Execution**: EPIC backdoor establishes C2 communication.
+3. **Privilege Escalation**: Misconfigurations allow privilege escalation.
+4. **Lateral Movement**: Attacker moves across Windows hosts and the domain controller.
+5. **Credential Access**: Mimikatz dumps credentials, followed by keylogging.
+6. **Linux Compromise**: Penquin malware is deployed on Apache server.
+7. **Watering Hole**: Malicious web page created for later exploitation.
+
+For a detailed attack sequence, refer to the [full Carbon Detections Scenario](https://github.com/center-for-threat-informed-defense/adversary_emulation_library/blob/master/turla/Emulation_Plan/Carbon_Scenario/Carbon_Detections_Scenario.md).
+
 ## ⚙️ Lab Requirements
 
 The emulation uses the MITRE ATT&CK Evaluations range configuration, requiring specific Windows and Linux operating systems. Provisioning is automated using Ansible.
