@@ -3,6 +3,8 @@
   become: yes
   become_method: sudo
   hosts: carbon_lin
+  vars_files:
+    - secrets.yml
   tasks:
     - name: Download Cortex XSIAM {{ ansible_os_family }} Agent using {{ package_type }}
       local_action:
@@ -103,6 +105,8 @@
 
 - name: Download and Deploy Cortex XSIAM Agent on Windows
   hosts: carbon_win
+  vars_files:
+    - secrets.yml
   tasks:
 
     - name: Download Cortex XSIAM {{ ansible_os_family }} Agent using {{ package_type }}
@@ -163,6 +167,8 @@
 
 - name: Install Cortex XSIAM Agent on Windows
   hosts: carbon
+  vars_files:
+    - secrets.yml
   tasks:
 
     - name: Install Cortex XSIAM Agent silently
@@ -186,6 +192,8 @@
 
 - name: Install Cortex XSIAM Agent on Linux 
   hosts: carbon_lin
+  vars_files:
+    - secrets.yml
   tasks:
 
     - name: Ensure /etc/panw directory is owned by root
@@ -220,6 +228,8 @@
 
 - name: Check Cortex XSIAM Agent
   hosts: carbon
+  vars_files:
+    - secrets.yml
   tasks:
 
     - name: Check Cortex XDR on Windows
