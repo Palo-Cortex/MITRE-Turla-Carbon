@@ -103,7 +103,9 @@ xsiamKEY: <XSIAM API Key>
 xsiamID: <XSIAM API ID>
 xsiamURL: <XSIAM API URL>
 xsiamWINDIST: <Windows Installer Distribution ID>
+xsiamWINPACKTYPE: <Package Type (i.e. x64)>
 xsiamLINDIST: <Linux Installer Distribution ID>
+xsiamLINPACKTYPE: <Package Type (i.e. sh)>
 falconCID: <CrowdStrike Falcon Customer ID>
 ```
 
