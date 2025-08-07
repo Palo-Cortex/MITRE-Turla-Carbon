@@ -1,114 +1,15 @@
 ---
-- name: Download and Deploy Cortex XSIAM Agent on Linux
-  become: yes
-  become_method: sudo
-  hosts: carbon_lin
-  vars_files:
-    - secrets.yml
+
+- name: Load Secrets
+  hosts: all
   tasks:
-    - name: Download Cortex XSIAM {{ ansible_os_family }} Agent using {{ package_type }}
-      local_action:
-        module: uri
-        url: "{{ xsiamURL }}/public_api/v1/distributions/get_dist_url"
-        method: POST
-        headers:
-          Accept: "application/json"
-          Content-Type: "application/json"
-          Authorization: "{{ xsiamKEY }}"
-          x-xdr-auth-id: "{{ xsiamID }}"
-        body_format: json
-        body:
-          {
-            request_data: {
-            distribution_id: "{{ xsiamLINDIST }}",
-            package_type: "{{ xsiamLINPACKTYPE }}" 
-            }
-          }
-        return_content: yes
-        timeout: 60
-      run_once: true 
-      register: response
-
-    - name: Extract the download URL
-      set_fact:
-        download_url: "{{ response.json.reply.distribution_url }}"
-
-    - name: Make Ansible Files Directory if it doesn't exist
-      delegate_to: localhost
-      file:
-        path: "./files"
-        state: directory
-        mode: '0755'
-      run_once: true
-
-    - name: Download Cortex XSIAM Agent Installer {{ xsiamURL }}
-      local_action:
-        module: uri
-        url: "{{ download_url }}"
-        method: POST 
-        headers:
-          Accept: "application/json"
-          Content-Type: "application/json"
-          Authorization: "{{ xsiamKEY }}"
-          x-xdr-auth-id: "{{ xsiamID }}"
-        dest: "./files/cortex_xsiam_agent.tar.gz"
-        timeout: 60
-        mode: '0644'
-      run_once: true 
-
-    - name: Create /home/{{ ansible_user }}/xdr_agent/ directory
-      ansible.builtin.file:
-        path: /home/{{ ansible_user }}/xdr_agent
-        state: directory
-        mode: '0755'
-
-    - name: "Copy from local ./files/ to /home/{{ ansible_user }}/  on {{ ansible_hostname }}"
-      ansible.builtin.copy:
-        src: "./files/cortex_xsiam_agent.tar.gz"
-        dest: "/home/{{ ansible_user }}/xdr_agent/cortex_xsiam_agent.tar.gz"
-        mode: '0755'
-
-    - name: Extract tar.gz file to /home/{{ ansible_user }}/ 
-      ansible.builtin.unarchive:
-        src: "/home/{{ ansible_user }}/xdr_agent/cortex_xsiam_agent.tar.gz"
-        dest: "/home/{{ ansible_user }}/xdr_agent/"
-        remote_src: yes  # Set to 'yes' if file is already on remote
-
-    - name: Create /etc/panw directory
-      ansible.builtin.file:
-        path: /etc/panw
-        state: directory
-        mode: '0755'
-
-    - name: Move cortex.sh to /etc/panw
-      become: yes
-      become_method: sudo
-      ansible.builtin.command:
-        cmd: "mv /home/{{ ansible_user }}/xdr_agent/cortex.conf /etc/panw/cortex.conf"
-        
-
-    - name: "Find the Cortex XDR installer script in /home/{{ ansible_user }}/"
-      ansible.builtin.find:
-        paths: "/home/{{ ansible_user }}//xdr_agent/"
-        patterns: "cortex-*.sh"
-      register: found_scripts
-
-    - name: Fail if no installer script is found
-      fail:
-        msg: "No Cortex XDR installer script found!"
-      when: found_scripts.matched == 0
-
-    - name: "Ensure {{ found_scripts.files[0].path }} is executable"
-      ansible.builtin.file:
-        path: "{{ found_scripts.files[0].path }}"
-        mode: '0755'
+    - name: Load Secrets File
+      include_vars:
+        file: secrets.yml
 
 - name: Download and Deploy Cortex XSIAM Agent on Windows
   hosts: carbon_win
-  vars_files:
-    - secrets.yml
   tasks:
-
     - name: Download Cortex XSIAM {{ ansible_os_family }} Agent using {{ package_type }}
       local_action:
         module: uri
@@ -167,8 +68,6 @@
 
 - name: Install Cortex XSIAM Agent on Windows
   hosts: carbon
-  vars_files:
-    - secrets.yml
   tasks:
 
     - name: Install Cortex XSIAM Agent silently
@@ -190,46 +89,8 @@
         port: 22
         timeout: 120
 
-- name: Install Cortex XSIAM Agent on Linux 
-  hosts: carbon_lin
-  vars_files:
-    - secrets.yml
-  tasks:
-
-    - name: Ensure /etc/panw directory is owned by root
-      become: yes
-      become_method: sudo
-      ansible.builtin.file:
-        path: /etc/panw
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Ensure /etc/panw/cortex.conf is owned by root
-      become: yes
-      become_method: sudo
-      ansible.builtin.file:
-        path: /etc/panw/cortex.conf
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: "Run the discovered Cortex XDR installer script {{ found_scripts.files[0].path }} silently"
-      become: yes
-      become_method: sudo
-      ansible.builtin.shell: "{{ found_scripts.files[0].path }} --quiet"
-      register: install_result
-      ignore_errors: yes
-
-    - name: Display installation output
-      debug:
-        msg: "{{ install_result.stdout }}"
-
 - name: Check Cortex XSIAM Agent
   hosts: carbon
-  vars_files:
-    - secrets.yml
   tasks:
 
     - name: Check Cortex XDR on Windows
@@ -249,25 +110,4 @@
           debug:
             msg: "Cortex XDR is NOT installed on Windows"
           when: cytool_result.rc != 0
-
-    - name: Check Cortex XDR on Linux
-      when: ansible_os_family in ["RedHat", "Debian","Ubuntu"]
-      block:
-        - name: Run cytool checkin on Linux
-          become: yes
-          become_method: sudo
-          shell: '/opt/traps/bin/cytool checkin'
-          register: cytool_result
-          ignore_errors: yes
-
-        - name: Debug Linux XDR installed
-          debug:
-            msg: "Cortex XDR is installed on Linux"
-          when: cytool_result.stdout == ""
-
-        - name: Debug Linux XDR missing
-          debug:
-            msg: "Cortex XDR is NOT installed on Linux"
-          when: cytool_result.rc != 0
-
 
